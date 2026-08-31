@@ -1,0 +1,15 @@
+# Backend
+abc-home-backend/target/
+abc-home-backend/.env
+abc-home-backend/.idea/
+abc-home-backend/*.iml
+
+# Frontend
+abc-home-frontend/node_modules/
+abc-home-frontend/dist/
+abc-home-frontend/.env
+
+# General
+.vscode/
+*.log
+.DS_Store
