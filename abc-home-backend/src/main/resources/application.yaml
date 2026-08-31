@@ -27,10 +27,20 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
 app:
   jwt:
     secret: ${JWT_SECRET}
     expiration-ms: 86400000
+
+supabase:
+  url: ${SUPABASE_URL}
+  service-key: ${SUPABASE_SERVICE_KEY}
+  storage-bucket: product-images
 
 management:
   endpoints:
