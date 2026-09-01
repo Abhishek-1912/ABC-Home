@@ -45,6 +45,7 @@ public DaoAuthenticationProvider authenticationProvider() {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**", "/api/health", "/actuator/**").permitAll()
                 .requestMatchers("/api/products/**", "/api/categories/**").permitAll() // public browsing, added early for Phase 6
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ShoppingBag, Heart, ArrowLeft } from 'lucide-react'
 
 import Navbar from '../components/Navbar'
@@ -11,6 +11,7 @@ import { useWishlist } from '../context/WishlistContext'
 
 function ProductDetailsPage() {
   const { slug } = useParams()
+  const navigate = useNavigate()
   const { addToCart } = useCart()
   const { isInWishlist, toggleWishlist } = useWishlist()
 
@@ -66,8 +67,8 @@ function ProductDetailsPage() {
   const liked = isInWishlist(product.id)
   const displayPrice = product.price + (selectedVariant?.additionalPrice || 0)
 
-  function handleAddToCart() {
-    addToCart(
+  async function handleAddToCart() {
+    await addToCart(
       {
         ...product,
         variantId: selectedVariant?.id,
@@ -75,6 +76,18 @@ function ProductDetailsPage() {
       },
       1
     )
+  }
+
+  async function handleBuyNow() {
+    await addToCart(
+      {
+        ...product,
+        variantId: selectedVariant?.id,
+        price: displayPrice,
+      },
+      1
+    )
+    navigate('/cart')
   }
 
   return (
@@ -133,15 +146,24 @@ function ProductDetailsPage() {
               {product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : 'Out of stock'}
             </p>
 
-            <div className="mt-8 flex gap-3">
+                        <div className="mt-8 flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={handleAddToCart}
                 disabled={product.stockQuantity === 0}
-                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-gray-900 px-6 py-4 text-sm font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex flex-1 items-center justify-center gap-2 rounded-full border border-gray-900 px-6 py-4 text-sm font-medium text-gray-900 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <ShoppingBag size={17} />
                 Add to Cart
+              </button>
+
+              <button
+                type="button"
+                onClick={handleBuyNow}
+                disabled={product.stockQuantity === 0}
+                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-gray-900 px-6 py-4 text-sm font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Buy Now
               </button>
 
               <button
@@ -153,6 +175,13 @@ function ProductDetailsPage() {
                 <Heart size={20} className={liked ? 'fill-gray-900 text-gray-900' : ''} />
               </button>
             </div>
+
+            <Link
+              to="/cart"
+              className="mt-3 block text-center text-sm text-gray-500 underline underline-offset-4 transition hover:text-gray-900"
+            >
+              View Cart
+            </Link>
 
             {product.description && (
               <div className="mt-10 border-t border-gray-100 pt-8">

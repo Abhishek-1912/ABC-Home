@@ -82,7 +82,7 @@ function AccountPage() {
           {/* My Orders */}
 
           <Link
-            to="/orders"
+            to="/my-orders"
             className="block rounded-2xl border border-gray-100 p-6 text-left transition hover:bg-gray-50"
           >
 

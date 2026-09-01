@@ -1,100 +1,108 @@
-
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import {
+  fetchCart,
+  addCartItem,
+  updateCartItemQuantity,
+  removeCartItem,
+  clearCartApi,
+} from '../api/cart'
+import { useAuth } from './AuthContext'
 
 const CartContext = createContext()
 
+// Adapts the backend's CartResponse.Item shape into what CartPage/Navbar/etc already expect
+function adaptCartItem(item) {
+  return {
+    id: item.cartItemId,       // components use item.id as the key for update/remove
+    productId: item.productId,
+    variantId: item.variantId,
+    name: item.productName,
+    slug: item.productSlug,
+    image: item.imageUrl,
+    category: item.variantLabel || '', // reused for the small label line under the name
+    price: item.unitPrice,
+    quantity: item.quantity,
+  }
+}
+
 function CartProvider({ children }) {
-  const [cartItems, setCartItems] = useState(() => {
-    const savedCart = localStorage.getItem('abc-home-cart')
+  const { isAuthenticated } = useAuth()
+  const [cartItems, setCartItems] = useState([])
+  const [subtotal, setSubtotal] = useState(0)
+  const [loading, setLoading] = useState(false)
 
-    return savedCart
-      ? JSON.parse(savedCart)
-      : []
-  })
-
-  useEffect(() => {
-    localStorage.setItem(
-      'abc-home-cart',
-      JSON.stringify(cartItems)
-    )
-  }, [cartItems])
-
-  function addToCart(product, quantity = 1) {
-    setCartItems((currentItems) => {
-      const existingItem = currentItems.find(
-        (item) => item.id === product.id
-      )
-
-      if (existingItem) {
-        return currentItems.map((item) =>
-          item.id === product.id
-            ? {
-                ...item,
-                quantity:
-                  item.quantity + quantity,
-              }
-            : item
-        )
-      }
-
-      return [
-        ...currentItems,
-        {
-          ...product,
-          quantity,
-        },
-      ]
-    })
-  }
-
-  function removeFromCart(productId) {
-    setCartItems((currentItems) =>
-      currentItems.filter(
-        (item) => item.id !== productId
-      )
-    )
-  }
-
-  function updateQuantity(productId, quantity) {
-    if (quantity <= 0) {
-      removeFromCart(productId)
+  const refreshCart = useCallback(async () => {
+    if (!isAuthenticated) {
+      setCartItems([])
+      setSubtotal(0)
       return
     }
+    setLoading(true)
+    try {
+      const data = await fetchCart()
+      setCartItems(data.items.map(adaptCartItem))
+      setSubtotal(data.subtotal)
+    } catch (err) {
+      console.error('Failed to load cart', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [isAuthenticated])
 
-    setCartItems((currentItems) =>
-      currentItems.map((item) =>
-        item.id === productId
-          ? {
-              ...item,
-              quantity,
-            }
-          : item
-      )
-    )
+  useEffect(() => {
+    refreshCart()
+  }, [refreshCart])
+
+  async function addToCart(product, quantity = 1) {
+    if (!isAuthenticated) {
+      alert('Please log in to add items to your cart')
+      return
+    }
+    try {
+      const data = await addCartItem({
+        productId: product.id,
+        variantId: product.variantId || null,
+        quantity,
+      })
+      setCartItems(data.items.map(adaptCartItem))
+      setSubtotal(data.subtotal)
+    } catch (err) {
+      alert(err.message)
+    }
   }
 
-  function clearCart() {
-    setCartItems([])
+  async function removeFromCart(cartItemId) {
+    try {
+      const data = await removeCartItem(cartItemId)
+      setCartItems(data.items.map(adaptCartItem))
+      setSubtotal(data.subtotal)
+    } catch (err) {
+      alert(err.message)
+    }
   }
 
-  const totalItems = cartItems.reduce(
-    (total, item) => total + item.quantity,
-    0
-  )
+  async function updateQuantity(cartItemId, quantity) {
+    try {
+      const data = await updateCartItemQuantity(cartItemId, quantity)
+      setCartItems(data.items.map(adaptCartItem))
+      setSubtotal(data.subtotal)
+    } catch (err) {
+      alert(err.message)
+    }
+  }
 
-  const subtotal = cartItems.reduce(
-    (total, item) =>
-      total + item.price * item.quantity,
-    0
-  )
+  async function clearCart() {
+    try {
+      const data = await clearCartApi()
+      setCartItems(data.items.map(adaptCartItem))
+      setSubtotal(data.subtotal)
+    } catch (err) {
+      alert(err.message)
+    }
+  }
 
-  const shipping =
-    subtotal === 0
-      ? 0
-      : subtotal >= 999
-        ? 0
-        : 99
-
+  const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0)
+  const shipping = subtotal === 0 ? 0 : subtotal >= 999 ? 0 : 99
   const total = subtotal + shipping
 
   return (
@@ -105,10 +113,12 @@ function CartProvider({ children }) {
         removeFromCart,
         updateQuantity,
         clearCart,
+        refreshCart,
         totalItems,
         subtotal,
         shipping,
         total,
+        loading,
       }}
     >
       {children}

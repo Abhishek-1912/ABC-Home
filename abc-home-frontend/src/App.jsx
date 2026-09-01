@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import HomePage from './pages/HomePage'
@@ -7,17 +8,21 @@ import CartPage from './pages/CartPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import AccountPage from './pages/AccountPage'
+import MyOrdersPage from './pages/MyOrdersPage'
 import WishlistPage from './pages/WishlistPage'
 import CheckoutPage from './pages/CheckoutPage'
 import OrderSuccessPage from './pages/OrderSuccessPage'
-import MyOrdersPage from './pages/MyOrdersPage'
 
 function App() {
   return (
     <BrowserRouter>
+
       <Routes>
 
-        <Route path="/" element={<HomePage />} />
+        <Route
+          path="/"
+          element={<HomePage />}
+        />
 
         <Route
           path="/products"
@@ -35,41 +40,42 @@ function App() {
         />
 
         <Route
-  path="/login"
-  element={<LoginPage />}
-/>
+          path="/login"
+          element={<LoginPage />}
+        />
 
-<Route
-  path="/register"
-  element={<RegisterPage />}
-/>
+        <Route
+          path="/register"
+          element={<RegisterPage />}
+        />
 
-<Route
-  path="/account"
-  element={<AccountPage />}
-/>
+        <Route
+          path="/account"
+          element={<AccountPage />}
+        />
 
-<Route
-  path="/wishlist"
-  element={<WishlistPage />}
-/>
+        <Route
+          path="/my-orders"
+          element={<MyOrdersPage />}
+        />
 
-<Route
-  path="/checkout"
-  element={<CheckoutPage />}
-/>
+        <Route
+          path="/wishlist"
+          element={<WishlistPage />}
+        />
 
-<Route
-  path="/order-success"
-  element={<OrderSuccessPage />}
-/>
+        <Route
+          path="/checkout"
+          element={<CheckoutPage />}
+        />
 
-<Route
-  path="/orders"
-  element={<MyOrdersPage />}
-/>
+        <Route
+          path="/order-success"
+          element={<OrderSuccessPage />}
+        />
 
       </Routes>
+
     </BrowserRouter>
   )
 }
