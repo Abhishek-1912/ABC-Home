@@ -21,46 +21,40 @@ function RegisterPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  function handleSubmit(event) {
-    event.preventDefault()
+  async function handleSubmit(event) {
+  event.preventDefault()
 
-    setError('')
+  setError('')
 
-    if (!name || !email || !password || !confirmPassword) {
-      setError('Please fill in all fields')
-      return
-    }
-
-    if (password.length < 6) {
-      setError(
-        'Password must contain at least 6 characters'
-      )
-      return
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
-
-    setLoading(true)
-
-    setTimeout(() => {
-      const result = register(
-        name,
-        email,
-        password
-      )
-
-      if (!result.success) {
-        setError(result.message)
-        setLoading(false)
-        return
-      }
-
-      navigate('/account')
-    }, 500)
+  if (!name || !email || !password || !confirmPassword) {
+    setError('Please fill in all fields')
+    return
   }
+
+  if (password.length < 8) {
+    setError(
+      'Password must contain at least 8 characters'
+    )
+    return
+  }
+
+  if (password !== confirmPassword) {
+    setError('Passwords do not match')
+    return
+  }
+
+  setLoading(true)
+
+  const result = await register(name, email, password)
+
+  if (!result.success) {
+    setError(result.message)
+    setLoading(false)
+    return
+  }
+
+  navigate('/account')
+}
 
   return (
     <div className="min-h-screen bg-white text-gray-900">

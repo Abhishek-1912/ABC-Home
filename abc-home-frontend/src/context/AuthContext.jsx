@@ -1,111 +1,68 @@
-
 import { createContext, useContext, useEffect, useState } from 'react'
+import { loginUser, registerUser } from '../api/auth'
+import { setToken, clearToken, getToken } from '../api/client'
 
 const AuthContext = createContext()
 
 function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('abc-home-user')
-
-    return savedUser
-      ? JSON.parse(savedUser)
-      : null
+    return savedUser ? JSON.parse(savedUser) : null
   })
 
   useEffect(() => {
     if (user) {
-      localStorage.setItem(
-        'abc-home-user',
-        JSON.stringify(user)
-      )
+      localStorage.setItem('abc-home-user', JSON.stringify(user))
     } else {
       localStorage.removeItem('abc-home-user')
     }
   }, [user])
 
-  function login(email, password) {
-    // Temporary frontend authentication.
-    // This will be replaced with Spring Boot API authentication.
+  async function login(email, password) {
+    try {
+      const data = await loginUser({ email, password })
 
-    const savedUsers = JSON.parse(
-      localStorage.getItem('abc-home-users') || '[]'
-    )
+      setToken(data.token)
 
-    const existingUser = savedUsers.find(
-      (item) =>
-        item.email.toLowerCase() === email.toLowerCase() &&
-        item.password === password
-    )
-
-    if (!existingUser) {
-      return {
-        success: false,
-        message: 'Invalid email or password',
+      const loggedInUser = {
+        id: data.userId,
+        name: data.fullName,
+        email: data.email,
+        role: data.role,
       }
-    }
 
-    const loggedInUser = {
-      id: existingUser.id,
-      name: existingUser.name,
-      email: existingUser.email,
-    }
+      setUser(loggedInUser)
 
-    setUser(loggedInUser)
-
-    return {
-      success: true,
-      user: loggedInUser,
+      return { success: true, user: loggedInUser }
+    } catch (err) {
+      return { success: false, message: err.message }
     }
   }
 
-  function register(name, email, password) {
-    const savedUsers = JSON.parse(
-      localStorage.getItem('abc-home-users') || '[]'
-    )
+  async function register(name, email, password) {
+    try {
+      const data = await registerUser({ name, email, password })
 
-    const existingUser = savedUsers.find(
-      (item) =>
-        item.email.toLowerCase() === email.toLowerCase()
-    )
+      setToken(data.token)
 
-    if (existingUser) {
-      return {
-        success: false,
-        message: 'An account with this email already exists',
+      const loggedInUser = {
+        id: data.userId,
+        name: data.fullName,
+        email: data.email,
+        role: data.role,
       }
-    }
 
-    const newUser = {
-      id: Date.now(),
-      name,
-      email,
-      password,
-    }
+      setUser(loggedInUser)
 
-    localStorage.setItem(
-      'abc-home-users',
-      JSON.stringify([
-        ...savedUsers,
-        newUser,
-      ])
-    )
-
-    const loggedInUser = {
-      id: newUser.id,
-      name: newUser.name,
-      email: newUser.email,
-    }
-
-    setUser(loggedInUser)
-
-    return {
-      success: true,
-      user: loggedInUser,
+      return { success: true, user: loggedInUser }
+    } catch (err) {
+      return { success: false, message: err.message }
     }
   }
 
   function logout() {
     setUser(null)
+    clearToken()
   }
 
   return (
@@ -115,7 +72,7 @@ function AuthProvider({ children }) {
         login,
         register,
         logout,
-        isAuthenticated: Boolean(user),
+        isAuthenticated: Boolean(user) && Boolean(getToken()),
       }}
     >
       {children}

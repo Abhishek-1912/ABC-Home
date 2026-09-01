@@ -18,30 +18,28 @@ function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  function handleSubmit(event) {
-    event.preventDefault()
+  async function handleSubmit(event) {
+  event.preventDefault()
 
-    setError('')
+  setError('')
 
-    if (!email || !password) {
-      setError('Please enter your email and password')
-      return
-    }
-
-    setLoading(true)
-
-    setTimeout(() => {
-      const result = login(email, password)
-
-      if (!result.success) {
-        setError(result.message)
-        setLoading(false)
-        return
-      }
-
-      navigate('/account')
-    }, 500)
+  if (!email || !password) {
+    setError('Please enter your email and password')
+    return
   }
+
+  setLoading(true)
+
+  const result = await login(email, password)
+
+  if (!result.success) {
+    setError(result.message)
+    setLoading(false)
+    return
+  }
+
+  navigate('/account')
+}
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
