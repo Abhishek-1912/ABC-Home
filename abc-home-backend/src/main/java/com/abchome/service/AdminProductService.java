@@ -101,17 +101,29 @@ public class AdminProductService {
             }
         }
 
-        product.getVariants().clear();
         if (req.getVariants() != null) {
             for (ProductCreateRequest.VariantInput v : req.getVariants()) {
-                ProductVariant variant = new ProductVariant();
-                variant.setProduct(product);
-                variant.setVariantName(v.getVariantName());
-                variant.setVariantValue(v.getVariantValue());
-                variant.setAdditionalPrice(v.getAdditionalPrice());
-                variant.setStock(v.getStock());
-                variant.setSku(v.getSku());
-                product.getVariants().add(variant);
+                ProductVariant existing = product.getVariants().stream()
+                        .filter(pv -> pv.getVariantName().equals(v.getVariantName())
+                                && pv.getVariantValue().equals(v.getVariantValue()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (existing != null) {
+                    // Update in place — never delete a variant that might be referenced by past orders
+                    existing.setAdditionalPrice(v.getAdditionalPrice());
+                    existing.setStock(v.getStock());
+                    existing.setSku(v.getSku());
+                } else {
+                    ProductVariant newVariant = new ProductVariant();
+                    newVariant.setProduct(product);
+                    newVariant.setVariantName(v.getVariantName());
+                    newVariant.setVariantValue(v.getVariantValue());
+                    newVariant.setAdditionalPrice(v.getAdditionalPrice());
+                    newVariant.setStock(v.getStock());
+                    newVariant.setSku(v.getSku());
+                    product.getVariants().add(newVariant);
+                }
             }
         }
 
