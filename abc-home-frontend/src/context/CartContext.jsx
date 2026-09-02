@@ -12,8 +12,10 @@ const CartContext = createContext()
 
 // Adapts the backend's CartResponse.Item shape into what CartPage/Navbar/etc already expect
 function adaptCartItem(item) {
+
+  console.log("Raw backend cart item:", item);
   return {
-    id: item.cartItemId,       // components use item.id as the key for update/remove
+    id: item.cartItemId ?? item.id,  // <-- Fallback to item.id if cartItemId is undefined // components use item.id as the key for update/remove
     productId: item.productId,
     variantId: item.variantId,
     name: item.productName,
@@ -71,26 +73,35 @@ function CartProvider({ children }) {
     }
   }
 
-  async function removeFromCart(cartItemId) {
-    try {
-      const data = await removeCartItem(cartItemId)
-      setCartItems(data.items.map(adaptCartItem))
-      setSubtotal(data.subtotal)
-    } catch (err) {
-      alert(err.message)
-    }
+ async function removeFromCart(cartItemId) {
+  if (!cartItemId) {
+    console.error("removeFromCart called with an invalid ID:", cartItemId);
+    alert("Could not remove item: Missing item identifier.");
+    return;
   }
-
-  async function updateQuantity(cartItemId, quantity) {
-    try {
-      const data = await updateCartItemQuantity(cartItemId, quantity)
-      setCartItems(data.items.map(adaptCartItem))
-      setSubtotal(data.subtotal)
-    } catch (err) {
-      alert(err.message)
-    }
+  try {
+    const data = await removeCartItem(cartItemId);
+    setCartItems(data.items.map(adaptCartItem));
+    setSubtotal(data.subtotal);
+  } catch (err) {
+    alert(err.message);
   }
+}
 
+async function updateQuantity(cartItemId, quantity) {
+  if (!cartItemId) {
+    console.error("updateQuantity called with an invalid ID:", cartItemId);
+    alert("Could not update quantity: Missing item identifier.");
+    return;
+  }
+  try {
+    const data = await updateCartItemQuantity(cartItemId, quantity);
+    setCartItems(data.items.map(adaptCartItem));
+    setSubtotal(data.subtotal);
+  } catch (err) {
+    alert(err.message);
+  }
+}
   async function clearCart() {
     try {
       const data = await clearCartApi()

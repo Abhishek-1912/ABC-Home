@@ -50,6 +50,7 @@ public class CartService {
 
         if (existing.isPresent()) {
             existing.get().setQuantity(desiredQuantity);
+            cartItemRepository.save(existing.get());
         } else {
             CartItem item = new CartItem();
             item.setCart(cart);
@@ -57,6 +58,9 @@ public class CartService {
             item.setVariant(variant);
             item.setQuantity(req.getQuantity());
             cart.getItems().add(item);
+            
+            // Explicitly save and flush so the database generates the ID immediately
+            cartItemRepository.saveAndFlush(item);
         }
 
         return toResponse(cart);
