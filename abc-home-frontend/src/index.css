@@ -39,3 +39,34 @@ img {
   max-width: 100%;
   display: block;
 }
+
+/* Print styles: hide regular layout and display only the print slip */
+@media print {
+  /* Hide main site UI, sidebar, headers, and dashboard elements */
+  aside, 
+  nav, 
+  header, 
+  .no-print {
+    display: none !important;
+  }
+
+  /* Force print area to take full page width */
+  body, html, main {
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Show dedicated print slip element */
+  .print-only {
+    display: block !important;
+    width: 100% !important;
+  }
+}
+
+/* Hide print slip on screen preview */
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}

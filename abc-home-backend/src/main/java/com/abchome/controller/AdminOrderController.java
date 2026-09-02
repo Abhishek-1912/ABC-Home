@@ -22,6 +22,11 @@ public class AdminOrderController {
         return orderService.listAllForAdmin();
     }
 
+    @GetMapping("/{id}")
+    public OrderResponse getOrderDetails(@PathVariable Long id) {
+        return orderService.getOrderByIdForAdmin(id);
+    }
+
     @PutMapping("/{id}/status")
     public OrderResponse updateStatus(@PathVariable Long id, @Valid @RequestBody OrderStatusUpdateRequest request) {
         return orderService.updateStatus(id, request.getStatus());

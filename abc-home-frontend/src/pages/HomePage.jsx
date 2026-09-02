@@ -67,12 +67,12 @@ function HomePage() {
               </Link>
 
               
-              
-                href="#categories"
+                {/* href="#categories"
                 className="rounded-full border border-gray-300 bg-white px-7 py-3.5 text-sm font-medium transition hover:bg-gray-50"
               <a>
                 Explore Categories
-              </a>
+              </a> */}
+              
             </div>
           </div>
 

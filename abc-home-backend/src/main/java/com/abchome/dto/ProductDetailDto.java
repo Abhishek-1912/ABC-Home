@@ -21,6 +21,9 @@ public class ProductDetailDto {
     private BigDecimal mrp;
     private BigDecimal sellingPrice;
     private int stockQuantity;
+    private double averageRating;
+    private long reviewCount;
+    
     private List<ImageDto> images;
     private List<VariantDto> variants;
 

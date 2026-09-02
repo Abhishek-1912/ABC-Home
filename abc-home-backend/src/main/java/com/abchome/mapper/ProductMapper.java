@@ -5,13 +5,18 @@ import com.abchome.dto.ProductSummaryDto;
 import com.abchome.entity.Product;
 import com.abchome.entity.ProductImage;
 import com.abchome.entity.ProductVariant;
+import com.abchome.repository.ReviewRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class ProductMapper {
+
+    private final ReviewRepository reviewRepository;
 
     public ProductSummaryDto toSummary(Product p) {
         String primaryImage = p.getImages().stream()
@@ -19,9 +24,12 @@ public class ProductMapper {
                 .map(ProductImage::getImageUrl)
                 .orElse(null);
 
+        double avgRating = averageRating(p.getId());
+        long reviewCount = reviewRepository.countByProductId(p.getId());
+
         return new ProductSummaryDto(
                 p.getId(), p.getName(), p.getSlug(), p.getMrp(), p.getSellingPrice(),
-                primaryImage, p.isFeatured(), p.isNewArrival()
+                primaryImage, p.isFeatured(), p.isNewArrival(), avgRating, reviewCount
         );
     }
 
@@ -37,11 +45,19 @@ public class ProductMapper {
                 ))
                 .toList();
 
+        double avgRating = averageRating(p.getId());
+        long reviewCount = reviewRepository.countByProductId(p.getId());
+
         return new ProductDetailDto(
                 p.getId(), p.getSku(), p.getName(), p.getSlug(), p.getShortDescription(),
                 p.getDescription(), p.getCategory().getName(), p.getCategory().getSlug(),
                 p.getBrand(), p.getMrp(), p.getSellingPrice(), p.getStockQuantity(),
-                images, variants
+                avgRating, reviewCount, images, variants
         );
+    }
+
+    private double averageRating(Long productId) {
+        Double avg = reviewRepository.findAverageRatingByProductId(productId);
+        return avg != null ? Math.round(avg * 10) / 10.0 : 0.0; // round to 1 decimal, 0 if no reviews
     }
 }

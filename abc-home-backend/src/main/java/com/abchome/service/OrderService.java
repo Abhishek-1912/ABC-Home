@@ -163,6 +163,12 @@ public class OrderService {
         );
     }
 
+    public OrderResponse getOrderByIdForAdmin(Long orderId) {
+    Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + orderId));
+    return toDto(order);
+}
+
         @Transactional
     public OrderResponse cancelOrder(String userEmail, Long orderId) {
         User user = userRepository.findByEmail(userEmail)

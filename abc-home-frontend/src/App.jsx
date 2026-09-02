@@ -19,6 +19,8 @@ import AdminProducts from './admin/AdminProducts'
 import AdminCategories from './admin/AdminCategories'
 import AdminOrders from './admin/AdminOrders'
 
+import AdminUsers from './admin/AdminUsers'
+
 function App() {
   return (
     <BrowserRouter>
@@ -47,6 +49,7 @@ function App() {
           <Route path="products" element={<AdminProducts />} />
           <Route path="categories" element={<AdminCategories />} />
           <Route path="orders" element={<AdminOrders />} />
+          <Route path="users" element={<AdminUsers />} />
         </Route>
       </Routes>
     </BrowserRouter>

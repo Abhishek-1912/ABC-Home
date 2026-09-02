@@ -13,7 +13,9 @@ public class ProductSummaryDto {
     private String slug;
     private BigDecimal mrp;
     private BigDecimal sellingPrice;
-    private String primaryImageUrl; // first image, or null
+    private String primaryImageUrl;
     private boolean featured;
     private boolean newArrival;
+    private double averageRating;
+    private long reviewCount;
 }

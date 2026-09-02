@@ -29,6 +29,15 @@ export async function uploadProductImage(file) {
   return data.url
 }
 
+export async function bulkUploadProducts(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  const { data } = await apiClient.post('/admin/products/bulk-upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
+}
+
 // Categories
 export async function fetchAdminCategories() {
   const { data } = await apiClient.get('/admin/categories')
@@ -52,5 +61,26 @@ export async function fetchAdminOrders() {
 
 export async function updateOrderStatus(id, status) {
   const { data } = await apiClient.put(`/admin/orders/${id}/status`, { status })
+  return data
+}
+
+export async function fetchAdminOrderDetails(id) {
+  const { data } = await apiClient.get(`/admin/orders/${id}`)
+  return data
+}
+
+// Users
+export async function fetchAdminUsers() {
+  const { data } = await apiClient.get('/admin/users')
+  return data
+}
+
+export async function fetchUserProfile(userId) {
+  const { data } = await apiClient.get(`/admin/users/${userId}`)
+  return data
+}
+
+export async function updateUserRole(userId, newRole) {
+  const { data } = await apiClient.patch(`/admin/users/${userId}/role`, { role: newRole })
   return data
 }
