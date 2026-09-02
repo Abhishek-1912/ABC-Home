@@ -23,7 +23,8 @@ public class AddressService {
 
     public List<AddressResponse> list(String userEmail) {
         User user = getUser(userEmail);
-            return addressRepository.findByUserIdOrderByDefaultAddressDesc(user.getId()).stream()
+        // Only fetch addresses where is_active is true
+        return addressRepository.findByUserIdAndIsActiveTrueOrderByDefaultAddressDesc(user.getId()).stream()
                 .map(this::toDto)
                 .toList();
     }
@@ -35,6 +36,7 @@ public class AddressService {
         Address address = new Address();
         address.setUser(user);
         applyRequest(address, req);
+        address.setActive(true); // Ensure new addresses are active
 
         addressRepository.save(address);
         return toDto(address);
@@ -45,7 +47,23 @@ public class AddressService {
         User user = getUser(userEmail);
         Address address = addressRepository.findByIdAndUserId(addressId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
-        addressRepository.delete(address);
+        
+        // Soft delete instead of hard delete
+        address.setActive(false);
+        addressRepository.save(address);
+    }
+
+    @Transactional
+    public AddressResponse update(String userEmail, Long addressId, AddressRequest req) {
+        User user = getUser(userEmail);
+        
+        Address address = addressRepository.findByIdAndUserId(addressId, user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
+
+        applyRequest(address, req);
+        addressRepository.save(address);
+        
+        return toDto(address);
     }
 
     private void applyRequest(Address address, AddressRequest req) {

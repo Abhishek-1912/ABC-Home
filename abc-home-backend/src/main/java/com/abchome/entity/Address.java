@@ -56,4 +56,17 @@ private boolean defaultAddress = false;
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
+
+    @Column(name = "is_active")
+private boolean isActive = true;
+
+// Getters and Setters
+public boolean isActive() {
+    return isActive;
+}
+
+public void setActive(boolean active) {
+    isActive = active;
+}
+
 }

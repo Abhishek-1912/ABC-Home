@@ -7,6 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface AddressRepository extends JpaRepository<Address, Long> {
-List<Address> findByUserIdOrderByDefaultAddressDesc(Long userId);
-    Optional<Address> findByIdAndUserId(Long id, Long userId); // ownership check
+    List<Address> findByUserIdAndIsActiveTrueOrderByDefaultAddressDesc(Long userId);
+    Optional<Address> findByIdAndUserId(Long id, Long userId);
 }
