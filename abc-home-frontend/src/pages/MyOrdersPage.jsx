@@ -10,7 +10,9 @@ import { useEffect, useState } from 'react'
 
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import { fetchMyOrders } from '../api/orders'
+import { fetchMyOrders, cancelOrder, returnOrder } from '../api/orders'
+
+
 
 function MyOrdersPage() {
   const [expandedOrder, setExpandedOrder] = useState(null)
@@ -27,6 +29,26 @@ function MyOrdersPage() {
 
   function toggleOrder(orderId) {
     setExpandedOrder((current) => (current === orderId ? null : orderId))
+  }
+
+    async function handleCancel(orderId) {
+    if (!confirm('Cancel this order?')) return
+    try {
+      const updated = await cancelOrder(orderId)
+      setOrders((current) => current.map((o) => (o.id === orderId ? { ...o, status: updated.status } : o)))
+    } catch (err) {
+      alert(err.message)
+    }
+  }
+
+  async function handleReturn(orderId) {
+    if (!confirm('Request a return for this order?')) return
+    try {
+      const updated = await returnOrder(orderId)
+      setOrders((current) => current.map((o) => (o.id === orderId ? { ...o, status: updated.status } : o)))
+    } catch (err) {
+      alert(err.message)
+    }
   }
 
   return (
@@ -135,7 +157,7 @@ function MyOrdersPage() {
                         ))}
                       </div>
 
-                      <div className="border-t border-gray-100 bg-gray-50 p-6">
+                                            <div className="border-t border-gray-100 bg-gray-50 p-6">
                         <div className="space-y-3">
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-500">Subtotal</span>
@@ -150,6 +172,24 @@ function MyOrdersPage() {
                             <span className="text-xl font-semibold">₹{order.total.toLocaleString('en-IN')}</span>
                           </div>
                         </div>
+
+                        {['PLACED', 'CONFIRMED'].includes(order.status) && (
+                          <button
+                            onClick={() => handleCancel(order.id)}
+                            className="mt-5 w-full rounded-full border border-red-200 px-6 py-3 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                          >
+                            Cancel Order
+                          </button>
+                        )}
+
+                        {order.status === 'DELIVERED' && (
+                          <button
+                            onClick={() => handleReturn(order.id)}
+                            className="mt-5 w-full rounded-full border border-gray-300 px-6 py-3 text-sm font-medium transition hover:bg-gray-100"
+                          >
+                            Request Return
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}

@@ -162,4 +162,49 @@ public class OrderService {
                 order.getCreatedAt(), items
         );
     }
+
+        @Transactional
+    public OrderResponse cancelOrder(String userEmail, Long orderId) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Order order = orderRepository.findByIdAndUserId(orderId, user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        if (!List.of("PLACED", "CONFIRMED").contains(order.getStatus())) {
+            throw new IllegalArgumentException(
+                    "This order can no longer be cancelled — it's already " + order.getStatus().toLowerCase()
+            );
+        }
+
+        // Restock every item — the inverse of what placeOrder() decremented
+        for (OrderItem item : order.getItems()) {
+            if (item.getVariant() != null) {
+                item.getVariant().setStock(item.getVariant().getStock() + item.getQuantity());
+            } else {
+                item.getProduct().setStockQuantity(item.getProduct().getStockQuantity() + item.getQuantity());
+            }
+        }
+
+        order.setStatus("CANCELLED");
+        return toDto(order);
+    }
+
+    @Transactional
+    public OrderResponse requestReturn(String userEmail, Long orderId) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Order order = orderRepository.findByIdAndUserId(orderId, user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        if (!order.getStatus().equals("DELIVERED")) {
+            throw new IllegalArgumentException("Only delivered orders can be returned");
+        }
+
+        // Stock is NOT restored here — the item needs to be physically inspected
+        // by the warehouse first. Admin restores stock manually once the return is verified.
+        order.setStatus("RETURNED");
+        return toDto(order);
+    }
 }
