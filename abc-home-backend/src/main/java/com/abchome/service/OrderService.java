@@ -1,5 +1,6 @@
 package com.abchome.service;
 
+import com.abchome.dto.AdminOrderSummaryDto;
 import com.abchome.dto.OrderResponse;
 import com.abchome.dto.PlaceOrderRequest;
 import com.abchome.entity.*;
@@ -8,6 +9,7 @@ import com.abchome.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -122,6 +124,24 @@ public class OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Order order = orderRepository.findByIdAndUserId(orderId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        return toDto(order);
+    }
+
+        public List<AdminOrderSummaryDto> listAllForAdmin() {
+        return orderRepository.findAll().stream()
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .map(o -> new AdminOrderSummaryDto(
+                        o.getId(), o.getOrderNumber(), o.getUser().getFullName(), o.getUser().getEmail(),
+                        o.getTotal(), o.getStatus(), o.getPaymentStatus(), o.getPaymentMethod(), o.getCreatedAt()
+                ))
+                .toList();
+    }
+
+    @Transactional
+    public OrderResponse updateStatus(Long orderId, String newStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + orderId));
+        order.setStatus(newStatus);
         return toDto(order);
     }
 

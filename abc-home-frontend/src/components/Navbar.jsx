@@ -1,5 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react'
+
 import {
   Heart,
   Search,
@@ -9,7 +10,10 @@ import {
   LogOut,
 } from 'lucide-react'
 
-import { Link, useNavigate } from 'react-router-dom'
+import {
+  Link,
+  useNavigate,
+} from 'react-router-dom'
 
 import { useCart } from '../context/CartContext'
 import { useWishlist } from '../context/WishlistContext'
@@ -22,19 +26,33 @@ function Navbar() {
 
   const navigate = useNavigate()
 
-  const [profileOpen, setProfileOpen] = useState(false)
+  const [profileOpen, setProfileOpen] =
+    useState(false)
+
+  const [searchOpen, setSearchOpen] =
+    useState(false)
+
+  const [searchText, setSearchText] =
+    useState('')
 
   const profileRef = useRef(null)
 
-  // Close dropdown when clicking outside
+  const searchRef = useRef(null)
+
+
+  /* Close profile dropdown */
+
   useEffect(() => {
+
     function handleClickOutside(event) {
+
       if (
         profileRef.current &&
         !profileRef.current.contains(event.target)
       ) {
         setProfileOpen(false)
       }
+
     }
 
     document.addEventListener(
@@ -48,18 +66,79 @@ function Navbar() {
         handleClickOutside
       )
     }
+
   }, [])
 
+
+  /* Close search */
+
+  useEffect(() => {
+
+    function handleClickOutside(event) {
+
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target)
+      ) {
+        setSearchOpen(false)
+      }
+
+    }
+
+    document.addEventListener(
+      'mousedown',
+      handleClickOutside
+    )
+
+    return () => {
+      document.removeEventListener(
+        'mousedown',
+        handleClickOutside
+      )
+    }
+
+  }, [])
+
+
   function handleLogout() {
+
     logout()
+
     setProfileOpen(false)
+
     navigate('/')
+
   }
 
+
+  function handleSearch(event) {
+
+    event.preventDefault()
+
+    const query =
+      searchText.trim()
+
+    if (!query) {
+      navigate('/products')
+      setSearchOpen(false)
+      return
+    }
+
+    navigate(
+      `/products?search=${encodeURIComponent(query)}`
+    )
+
+    setSearchOpen(false)
+
+  }
+
+
   return (
+
     <header className="sticky top-0 z-50 border-b border-gray-100 bg-white">
 
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+
 
         {/* Logo */}
 
@@ -110,17 +189,69 @@ function Navbar() {
 
         <div className="flex items-center gap-4">
 
-          {/* Search */}
 
-          <button
-            type="button"
-            aria-label="Search"
+          {/* Global Search */}
+
+          <div
+            ref={searchRef}
+            className="relative"
           >
-            <Search
-              size={20}
-              strokeWidth={1.8}
-            />
-          </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setSearchOpen(
+                  (current) => !current
+                )
+              }
+              aria-label="Search products"
+            >
+
+              <Search
+                size={20}
+                strokeWidth={1.8}
+              />
+
+            </button>
+
+
+            {searchOpen && (
+
+              <form
+                onSubmit={handleSearch}
+                className="absolute right-0 top-10 z-50 flex w-72 items-center gap-2 rounded-2xl border border-gray-100 bg-white p-2 shadow-lg"
+              >
+
+                <Search
+                  size={17}
+                  className="ml-2 text-gray-400"
+                />
+
+                <input
+                  autoFocus
+                  type="search"
+                  value={searchText}
+                  onChange={(event) =>
+                    setSearchText(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Search products..."
+                  className="min-w-0 flex-1 px-2 py-2 text-sm outline-none"
+                />
+
+                <button
+                  type="submit"
+                  className="rounded-xl bg-gray-900 px-3 py-2 text-xs font-medium text-white hover:bg-gray-700"
+                >
+                  Search
+                </button>
+
+              </form>
+
+            )}
+
+          </div>
 
 
           {/* Profile */}
@@ -137,23 +268,24 @@ function Navbar() {
                   (current) => !current
                 )
               }
-              className="relative flex items-center justify-center"
+              className="flex items-center justify-center"
               aria-label="Account"
             >
+
               <User
                 size={20}
                 strokeWidth={1.8}
               />
+
             </button>
 
-
-            {/* Profile Dropdown */}
 
             {profileOpen && (
 
               <div className="absolute right-0 top-10 z-50 w-64 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg">
 
-                {/* User information */}
+
+                {/* User */}
 
                 {user ? (
 
@@ -186,8 +318,6 @@ function Navbar() {
                 )}
 
 
-                {/* Menu */}
-
                 <div className="p-2">
 
                   {user ? (
@@ -199,14 +329,12 @@ function Navbar() {
                         onClick={() =>
                           setProfileOpen(false)
                         }
-                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition hover:bg-gray-50"
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-gray-50"
                       >
 
                         <User size={17} />
 
-                        <span>
-                          My Account
-                        </span>
+                        My Account
 
                       </Link>
 
@@ -216,14 +344,12 @@ function Navbar() {
                         onClick={() =>
                           setProfileOpen(false)
                         }
-                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition hover:bg-gray-50"
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-gray-50"
                       >
 
                         <Package size={17} />
 
-                        <span>
-                          My Orders
-                        </span>
+                        My Orders
 
                       </Link>
 
@@ -233,14 +359,12 @@ function Navbar() {
                         onClick={() =>
                           setProfileOpen(false)
                         }
-                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition hover:bg-gray-50"
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-gray-50"
                       >
 
                         <Heart size={17} />
 
-                        <span>
-                          Wishlist
-                        </span>
+                        Wishlist
 
                         {wishlistCount > 0 && (
 
@@ -256,14 +380,12 @@ function Navbar() {
                       <button
                         type="button"
                         onClick={handleLogout}
-                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-gray-700 transition hover:bg-gray-50"
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-gray-50"
                       >
 
                         <LogOut size={17} />
 
-                        <span>
-                          Logout
-                        </span>
+                        Logout
 
                       </button>
 
@@ -278,14 +400,12 @@ function Navbar() {
                         onClick={() =>
                           setProfileOpen(false)
                         }
-                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition hover:bg-gray-50"
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-gray-50"
                       >
 
                         <User size={17} />
 
-                        <span>
-                          Login
-                        </span>
+                        Login
 
                       </Link>
 
@@ -295,12 +415,10 @@ function Navbar() {
                         onClick={() =>
                           setProfileOpen(false)
                         }
-                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition hover:bg-gray-50"
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-gray-50"
                       >
 
-                        <span className="ml-1">
-                          Create Account
-                        </span>
+                        Create Account
 
                       </Link>
 
