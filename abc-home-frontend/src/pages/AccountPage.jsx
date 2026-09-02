@@ -1,6 +1,7 @@
 
 import { useEffect } from 'react'
 import {
+  LayoutDashboard,
   LogOut,
   Package,
   User,
@@ -99,6 +100,29 @@ function AccountPage() {
             </p>
 
           </Link>
+          
+                    {/* Admin Dashboard - only visible to admins */}
+
+          {user.role === 'ADMIN' && (
+            <Link
+              to="/admin"
+              className="block rounded-2xl border border-gray-100 p-6 text-left transition hover:bg-gray-50"
+            >
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100">
+                <LayoutDashboard size={20} />
+              </div>
+
+              <h2 className="mt-5 font-semibold">
+                Admin Dashboard
+              </h2>
+
+              <p className="mt-2 text-sm text-gray-500">
+                Manage products, categories and orders.
+              </p>
+
+            </Link>
+          )}
 
           {/* Logout */}
 
