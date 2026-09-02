@@ -4,8 +4,9 @@ import { ShoppingBag, Heart, ArrowLeft } from 'lucide-react'
 
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import { fetchProductBySlug } from '../api/products'
-import { adaptProductDetail } from '../utils/adaptProduct'
+import ProductCard from '../components/ProductCard'
+import { fetchProductBySlug, fetchProducts } from '../api/products'
+import { adaptProductDetail, adaptProductSummary } from '../utils/adaptProduct'
 import { useCart } from '../context/CartContext'
 import { useWishlist } from '../context/WishlistContext'
 
@@ -17,12 +18,15 @@ function ProductDetailsPage() {
 
   const [product, setProduct] = useState(null)
   const [selectedVariant, setSelectedVariant] = useState(null)
+  const [similarProducts, setSimilarProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
+
+    useEffect(() => {
     setLoading(true)
     setError('')
+    setSimilarProducts([])
 
     fetchProductBySlug(slug)
       .then((dto) => {
@@ -30,6 +34,20 @@ function ProductDetailsPage() {
         setProduct(adapted)
         if (adapted.variants.length > 0) {
           setSelectedVariant(adapted.variants[0])
+        }
+
+        // Fetch similar products from the same category, excluding this one
+        const categorySlug = dto.categorySlug
+        if (categorySlug) {
+          fetchProducts({ category: categorySlug, size: 5 })
+            .then((page) => {
+              const similar = page.content
+                .filter((p) => p.slug !== slug)
+                .slice(0, 4)
+                .map(adaptProductSummary)
+              setSimilarProducts(similar)
+            })
+            .catch(() => {}) // non-critical — fail silently, section just won't show
         }
       })
       .catch((err) => setError(err.message))
@@ -183,7 +201,7 @@ function ProductDetailsPage() {
               View Cart
             </Link>
 
-            {product.description && (
+                        {product.description && (
               <div className="mt-10 border-t border-gray-100 pt-8">
                 <h2 className="font-semibold">Description</h2>
                 <p className="mt-3 leading-7 text-gray-600">{product.description}</p>
@@ -191,6 +209,17 @@ function ProductDetailsPage() {
             )}
           </div>
         </div>
+
+        {similarProducts.length > 0 && (
+          <section className="mt-20 border-t border-gray-100 pt-14">
+            <h2 className="text-2xl font-semibold tracking-tight">You may also like</h2>
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {similarProducts.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          </section>
+        )}
       </main>
 
       <Footer />
