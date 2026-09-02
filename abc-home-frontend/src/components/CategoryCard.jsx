@@ -5,10 +5,11 @@ function CategoryCard({
   name,
   description,
   image,
+  slug,
 }) {
   return (
     <Link
-      to={`/products?category=${name.toLowerCase()}`}
+      to={`/products?category=${slug || name.toLowerCase()}`}
       className="group relative overflow-hidden rounded-2xl bg-gray-100"
     >
       <div className="aspect-[4/5] overflow-hidden">

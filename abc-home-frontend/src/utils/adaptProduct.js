@@ -5,11 +5,13 @@ export function adaptProductSummary(dto) {
     id: dto.id,
     slug: dto.slug,
     name: dto.name,
-    category: dto.categoryName || '', // not present on summary yet, added on detail
+    category: dto.categoryName || '',
     price: dto.sellingPrice,
     oldPrice: dto.mrp > dto.sellingPrice ? dto.mrp : null,
     image: dto.primaryImageUrl || 'https://placehold.co/600x600?text=ABC+Home',
-    rating: 4.5, // placeholder until reviews (Phase 2 per your roadmap) exist
+    rating: 4.5,
+    featured: dto.featured,
+    newArrival: dto.newArrival,
   }
 }
 

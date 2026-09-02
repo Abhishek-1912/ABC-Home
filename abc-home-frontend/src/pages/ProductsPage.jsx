@@ -57,9 +57,8 @@ function ProductsPage() {
   }, [selectedCategory, search, sort])
 
   const filteredProducts = useMemo(() => {
-    // Best-sellers filter has no backend equivalent yet — approximate client-side for now
     if (initialFilter === 'best-sellers') {
-      return products.filter((p) => p.rating >= 4.6)
+      return products.filter((p) => p.featured)
     }
     return products
   }, [products, initialFilter])
