@@ -53,6 +53,28 @@ export async function deleteCategory(id) {
   await apiClient.delete(`/admin/categories/${id}`)
 }
 
+// Inside src/api/admin.js
+
+// ... your existing imports and api setup ...
+
+export async function updateCategory(id, categoryData) {
+  const response = await fetch(`/api/admin/categories/${id}`, {
+    method: 'PUT', // or 'PATCH' depending on your backend route
+    headers: {
+      'Content-Type': 'application/json',
+      // 'Authorization': `Bearer ${token}` // Include your auth headers if needed
+    },
+    body: JSON.stringify(categoryData),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.message || 'Failed to update category')
+  }
+
+  return response.json()
+}
+
 // Orders
 export async function fetchAdminOrders() {
   const { data } = await apiClient.get('/admin/orders')
