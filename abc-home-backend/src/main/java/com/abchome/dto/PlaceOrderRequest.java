@@ -12,4 +12,6 @@ public class PlaceOrderRequest {
     private Long addressId;
 
     private String paymentMethod = "COD"; // COD for now; RAZORPAY/CASHFREE later
+
+     private String couponCode;
 }

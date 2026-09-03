@@ -9,8 +9,8 @@ export function adaptProductSummary(dto) {
     price: dto.sellingPrice,
     oldPrice: dto.mrp > dto.sellingPrice ? dto.mrp : null,
     image: dto.primaryImageUrl || 'https://placehold.co/600x600?text=ABC+Home',
-    rating: 4.5,
-    featured: dto.featured,
+    rating: dto.averageRating || 0,
+    reviewCount: dto.reviewCount || 0,    featured: dto.featured,
     newArrival: dto.newArrival,
   }
 }
@@ -29,6 +29,6 @@ export function adaptProductDetail(dto) {
     shortDescription: dto.shortDescription,
     stockQuantity: dto.stockQuantity,
     variants: dto.variants || [],
-    rating: 4.5, // placeholder
-  }
+    rating: dto.averageRating || 0,
+    reviewCount: dto.reviewCount || 0,  }
 }

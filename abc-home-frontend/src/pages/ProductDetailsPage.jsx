@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ShoppingBag, Heart, ArrowLeft } from 'lucide-react'
+import { ShoppingBag, Heart, ArrowLeft, Star } from 'lucide-react'
 
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -9,21 +9,28 @@ import { fetchProductBySlug, fetchProducts } from '../api/products'
 import { adaptProductDetail, adaptProductSummary } from '../utils/adaptProduct'
 import { useCart } from '../context/CartContext'
 import { useWishlist } from '../context/WishlistContext'
+import { useAuth } from '../context/AuthContext'
+import { fetchReviews, submitReview } from '../api/reviews'
 
 function ProductDetailsPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
   const { addToCart } = useCart()
   const { isInWishlist, toggleWishlist } = useWishlist()
+  const { user } = useAuth()
 
   const [product, setProduct] = useState(null)
   const [selectedVariant, setSelectedVariant] = useState(null)
   const [similarProducts, setSimilarProducts] = useState([])
+  const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  const [reviewForm, setReviewForm] = useState({ rating: 5, title: '', comment: '' })
+  const [submittingReview, setSubmittingReview] = useState(false)
+  const [reviewError, setReviewError] = useState('')
 
-    useEffect(() => {
+  useEffect(() => {
     setLoading(true)
     setError('')
     setSimilarProducts([])
@@ -49,6 +56,10 @@ function ProductDetailsPage() {
             })
             .catch(() => {}) // non-critical — fail silently, section just won't show
         }
+
+        fetchReviews(dto.id)
+          .then(setReviews)
+          .catch(() => {})
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
@@ -108,6 +119,24 @@ function ProductDetailsPage() {
     navigate('/cart')
   }
 
+  async function handleSubmitReview(event) {
+    event.preventDefault()
+    setReviewError('')
+    setSubmittingReview(true)
+
+    try {
+      const newReview = await submitReview(product.id, reviewForm)
+      setReviews((current) => [newReview, ...current])
+      setReviewForm({ rating: 5, title: '', comment: '' })
+    } catch (err) {
+      setReviewError(err.message)
+    } finally {
+      setSubmittingReview(false)
+    }
+  }
+
+  const hasAlreadyReviewed = user && reviews.some((r) => r.reviewerName === user.name)
+
   return (
     <div className="min-h-screen bg-white text-gray-900">
       <Navbar />
@@ -160,11 +189,28 @@ function ProductDetailsPage() {
               </div>
             )}
 
+            {product.reviewCount > 0 && (
+              <div className="mt-3 flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Star
+                      key={n}
+                      size={15}
+                      className={n <= Math.round(product.rating) ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}
+                    />
+                  ))}
+                </div>
+                <span className="text-gray-500">
+                  {product.rating.toFixed(1)} ({product.reviewCount} {product.reviewCount === 1 ? 'review' : 'reviews'})
+                </span>
+              </div>
+            )}
+
             <p className="mt-6 text-sm text-gray-500">
               {product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : 'Out of stock'}
             </p>
 
-                        <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={handleAddToCart}
@@ -201,7 +247,7 @@ function ProductDetailsPage() {
               View Cart
             </Link>
 
-                        {product.description && (
+            {product.description && (
               <div className="mt-10 border-t border-gray-100 pt-8">
                 <h2 className="font-semibold">Description</h2>
                 <p className="mt-3 leading-7 text-gray-600">{product.description}</p>
@@ -210,8 +256,102 @@ function ProductDetailsPage() {
           </div>
         </div>
 
+        <section className="mt-20 border-t border-gray-100 pt-14">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Reviews {reviews.length > 0 && `(${reviews.length})`}
+          </h2>
+
+          {user && !hasAlreadyReviewed && (
+            <form onSubmit={handleSubmitReview} className="mt-8 max-w-lg rounded-2xl border border-gray-100 p-6">
+              <h3 className="font-semibold">Write a review</h3>
+
+              {reviewError && (
+                <div className="mt-3 rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-600">{reviewError}</div>
+              )}
+
+              <div className="mt-4">
+                <label className="text-sm font-medium">Rating</label>
+                <div className="mt-2 flex gap-1">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setReviewForm((f) => ({ ...f, rating: n }))}
+                      aria-label={`Rate ${n} stars`}
+                    >
+                      <Star
+                        size={22}
+                        className={n <= reviewForm.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="text-sm font-medium">Title (optional)</label>
+                <input
+                  value={reviewForm.title}
+                  onChange={(e) => setReviewForm((f) => ({ ...f, title: e.target.value }))}
+                  className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm"
+                />
+              </div>
+
+              <div className="mt-4">
+                <label className="text-sm font-medium">Comment</label>
+                <textarea
+                  rows="3"
+                  value={reviewForm.comment}
+                  onChange={(e) => setReviewForm((f) => ({ ...f, comment: e.target.value }))}
+                  className="mt-1 w-full resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submittingReview}
+                className="mt-5 rounded-full bg-gray-900 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-gray-700 disabled:opacity-60"
+              >
+                {submittingReview ? 'Submitting...' : 'Submit Review'}
+              </button>
+            </form>
+          )}
+
+          {!user && (
+            <p className="mt-4 text-sm text-gray-500">
+              <Link to="/login" className="underline">Log in</Link> to write a review.
+            </p>
+          )}
+
+          <div className="mt-8 space-y-6">
+            {reviews.length === 0 && (
+              <p className="text-gray-400">No reviews yet — be the first to review this product.</p>
+            )}
+
+            {reviews.map((r) => (
+              <div key={r.id} className="border-b border-gray-100 pb-6">
+                <div className="flex items-center gap-2">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Star
+                      key={n}
+                      size={14}
+                      className={n <= r.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}
+                    />
+                  ))}
+                  <span className="text-sm font-medium">{r.reviewerName}</span>
+                </div>
+                {r.title && <p className="mt-2 font-medium">{r.title}</p>}
+                {r.comment && <p className="mt-1 text-sm text-gray-600">{r.comment}</p>}
+                <p className="mt-2 text-xs text-gray-400">
+                  {new Date(r.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {similarProducts.length > 0 && (
-          <section className="mt-20 border-t border-gray-100 pt-14">
+          <section className="mt-14 border-t border-gray-100 pt-14">
             <h2 className="text-2xl font-semibold tracking-tight">You may also like</h2>
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {similarProducts.map((p) => (

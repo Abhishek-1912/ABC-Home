@@ -27,7 +27,7 @@ public class OrderService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final ProductVariantRepository productVariantRepository;
-
+    private final CouponService couponService;
     @Transactional
     public OrderResponse placeOrder(String userEmail, PlaceOrderRequest req) {
         User user = userRepository.findByEmail(userEmail)
@@ -98,10 +98,18 @@ public class OrderService {
         }
 
         BigDecimal shippingFee = subtotal.compareTo(BigDecimal.valueOf(999)) >= 0 ? BigDecimal.ZERO : BigDecimal.valueOf(49);
+        BigDecimal discountAmount = BigDecimal.ZERO;
+
+        if (req.getCouponCode() != null && !req.getCouponCode().isBlank()) {
+            CouponService.CouponApplication applied = couponService.applyForOrder(req.getCouponCode(), subtotal);
+            order.setCouponId(applied.couponId());
+            discountAmount = applied.discountAmount();
+        }
 
         order.setSubtotal(subtotal);
         order.setShippingFee(shippingFee);
-        order.setTotal(subtotal.add(shippingFee));
+        order.setDiscountAmount(discountAmount);
+        order.setTotal(subtotal.add(shippingFee).subtract(discountAmount));
 
         orderRepository.save(order);
 
@@ -158,8 +166,8 @@ public class OrderService {
 
         return new OrderResponse(
                 order.getId(), order.getOrderNumber(), order.getSubtotal(), order.getShippingFee(),
-                order.getTotal(), order.getStatus(), order.getPaymentStatus(), order.getPaymentMethod(),
-                order.getCreatedAt(), items
+                order.getDiscountAmount(), order.getTotal(), order.getStatus(), order.getPaymentStatus(),
+                order.getPaymentMethod(), order.getCreatedAt(), items
         );
     }
 
