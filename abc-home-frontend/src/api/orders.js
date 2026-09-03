@@ -1,7 +1,7 @@
 import apiClient from './client'
 
-export async function placeOrder({ addressId, paymentMethod }) {
-  const { data } = await apiClient.post('/orders', { addressId, paymentMethod })
+export async function placeOrder({ addressId, paymentMethod, couponCode }) {
+  const { data } = await apiClient.post('/orders', { addressId, paymentMethod, couponCode })
   return data
 }
 

@@ -13,11 +13,12 @@ import Footer from '../components/Footer'
 import { useCart } from '../context/CartContext'
 import { createAddress } from '../api/addresses'
 import { placeOrder } from '../api/orders'
+import { validateCoupon } from '../api/coupons'
 
 function CheckoutPage() {
   const navigate = useNavigate()
 
-  const { cartItems, subtotal, shipping, total, refreshCart } = useCart()
+  const { cartItems, subtotal, shipping, total: cartTotal, refreshCart } = useCart()
 
   const [form, setForm] = useState({
     firstName: '',
@@ -34,9 +35,38 @@ function CheckoutPage() {
   const [placingOrder, setPlacingOrder] = useState(false)
   const [error, setError] = useState('')
 
+  const [couponCode, setCouponCode] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState(null)
+  const [couponError, setCouponError] = useState('')
+  const [applyingCoupon, setApplyingCoupon] = useState(false)
+
+  const actualDiscount = appliedCoupon?.discountAmount || 0
+  const total = cartTotal - actualDiscount
+
   function handleChange(event) {
     const { name, value } = event.target
     setForm((current) => ({ ...current, [name]: value }))
+  }
+
+  async function handleApplyCoupon() {
+    if (!couponCode.trim()) return
+    setCouponError('')
+    setApplyingCoupon(true)
+    try {
+      const result = await validateCoupon(couponCode.trim(), subtotal)
+      setAppliedCoupon(result)
+    } catch (err) {
+      setAppliedCoupon(null)
+      setCouponError(err.message)
+    } finally {
+      setApplyingCoupon(false)
+    }
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(null)
+    setCouponCode('')
+    setCouponError('')
   }
 
   async function handlePlaceOrder(event) {
@@ -67,6 +97,7 @@ function CheckoutPage() {
       const order = await placeOrder({
         addressId: address.id,
         paymentMethod: paymentMethod === 'cod' ? 'COD' : 'ONLINE',
+        couponCode: appliedCoupon?.code || null,
       })
 
       // Step 3: sync cart state (backend already cleared it)
@@ -214,6 +245,37 @@ function CheckoutPage() {
                 ))}
               </div>
 
+              <div className="mt-6 border-t border-gray-200 pt-6">
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between rounded-xl bg-green-50 px-4 py-3 text-sm">
+                    <span className="font-medium text-green-700">{appliedCoupon.code} applied</span>
+                    <button type="button" onClick={handleRemoveCoupon} className="text-green-700 underline">
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex gap-2">
+                      <input
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        placeholder="Coupon code"
+                        className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-gray-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyCoupon}
+                        disabled={applyingCoupon}
+                        className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium transition hover:bg-gray-50 disabled:opacity-60"
+                      >
+                        {applyingCoupon ? '...' : 'Apply'}
+                      </button>
+                    </div>
+                    {couponError && <p className="mt-2 text-xs text-red-600">{couponError}</p>}
+                  </div>
+                )}
+              </div>
+
               <div className="mt-6 space-y-4 border-t border-gray-200 pt-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Subtotal</span>
@@ -223,6 +285,12 @@ function CheckoutPage() {
                   <span className="text-gray-500">Shipping</span>
                   <span>{shipping === 0 ? 'FREE' : `₹${shipping}`}</span>
                 </div>
+                {actualDiscount > 0 && (
+                  <div className="flex justify-between text-sm text-green-700">
+                    <span>Discount</span>
+                    <span>-₹{actualDiscount.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between">
                     <span className="font-semibold">Total</span>
